@@ -1,6 +1,13 @@
 # Holodule Archiver
 
 
+## Motivation
+
+[Holodule](https://schedule.hololive.tv) is a wonderful website to grasp a day schedule of hololive production members.
+I want to see the past schedule sometimes so I save the webpage into a database by this scripts.
+For the present you can create a html that contains all the past schedule by using generate_html.py.
+
+
 ## How to create a develop environment
 
 ```py
