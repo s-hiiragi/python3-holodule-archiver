@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Settings for VS Code
+/.vscode
+
+# Local files
+/_*
+
+# Output files
+/holodule
+/holodule.db
+/holodule.html
