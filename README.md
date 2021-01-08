@@ -27,3 +27,9 @@ pip install -r requirements.txt
 
 Default locations of html files and a database:
 See setting.py
+
+
+## License
+
+Apache License 2.0
+
