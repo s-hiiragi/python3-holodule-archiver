@@ -8,7 +8,7 @@ I want to see the past schedule sometimes so I save the webpage into a database 
 For the present you can create a html that contains all the past schedule by using generate_html.py.
 
 
-## How to create a develop environment
+## How to create a develop/runtime environment
 
 ```py
 python -m venv .venv
