@@ -1,0 +1,16 @@
+:root, body { margin: 0px; padding: 0px; }
+body { padding: 1em; }
+td { border: 1px solid black; }
+select, input { padding: 0.5em; }
+img.icon { border-radius: 50%; width: 60px; border: 2px #ff45d5 solid; }
+
+/* for JavaScript */
+tr.hidden { display: none; }
+
+/* for Dark Theme */
+body.dark { background: #333; color: #FFF; }
+body.dark td { border-color: #111; }
+body.dark select { background: #111; color: #DDD; }
+body.dark input[type="button"] { background: #111; color: #DDD; }
+body.dark input[type="text"] { background: #111; color: #DDD; }
+body.dark input[type="date"] { background: #555; color: #DDD; }
