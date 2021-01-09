@@ -45,13 +45,15 @@ function registerEventListeners() {
     nameSelectBox.addEventListener('change', (e) => {
         nameToFilter.value = '';
         const name = nameSelectBox.value;
-        filterStreams({ 'name': name });
+        const date = new Date(dateToFilter.value);
+        filterStreams({ 'name': name, 'date': date });
     }, false);
 
     nameToFilter.addEventListener('input', (e) => {
         nameSelectBox.value = '';
         const name = nameToFilter.value;
-        filterStreams({ 'name': name });
+        const date = new Date(dateToFilter.value);
+        filterStreams({ 'name': name, 'date': date });
     }, false);
 
     dateToFilter.addEventListener('change', (e) => {
