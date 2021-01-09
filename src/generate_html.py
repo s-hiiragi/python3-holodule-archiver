@@ -5,7 +5,7 @@ from textwrap import dedent
 from .setting import dbname
 
 
-def generate_html():
+def generate_render_data():
     conn = sqlite3.connect(dbname)
     cur = conn.cursor()
     cur.execute('''
@@ -28,11 +28,19 @@ def generate_html():
             'starts_at': starts_at
         })
 
+    return {
+        'streams': streams
+    }
+
+
+def generate_html():
     with open('templates/holodule.html', encoding='UTF-8') as f:
         template_html = f.read()
 
+    render_data = generate_render_data()
+
     template = Template(template_html)
-    html = template.render({'streams': streams})
+    html = template.render(render_data)
 
     with open('holodule.html', 'w', encoding='UTF-8') as f:
         f.write(html)
