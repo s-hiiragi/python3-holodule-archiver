@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ホロジュール アーカイブ</title>
+    <link rel="stylesheet" href="holodule.css">
+    <script defer src="holodule.js"></script>
+
+<body>
+    <form onsubmit="return false;">
+        <select id="name_to_filter2">
+            <option value="">名前を選択</option>
+        </select>
+        <input type="text" id="name_to_filter" placeholder="name">
+        <input type="date" id="date_to_filter" placeholder="date">
+        <input type="button" id="clear_date_button" value="日付をクリア">
+        <input type="button" id="clear_all_button" value="すべてクリア">
+        <select id="theme">
+            <option value="default">デフォルト</option>
+            <option value="dark">ダークテーマ</option>
+        </select>
+    </form>
+    <table>
+        <thead>
+            <th>URL/THUMBNAIL</th>
+            <th>NAME</th>
+            <th>ICON</th>
+            <th>STARTS_AT</th>
+        </thead>
+        <tbody id="holodule_tbody">
+            {% for stream in streams %}
+            <tr>
+                <td class="thumbnail"><a href="{{ stream.url }}" target="_blank">
+                        <img src="{{ stream.thumb_url }}" width="160"></a>
+                </td>
+                <td class="name">{{ stream.streamer_name }}</td>
+                <td class="icon"><img src="{{ stream.icon_url }}" class="icon"></td>
+                <td class="starts_at">{{ stream.starts_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+
+</html>
