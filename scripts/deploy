@@ -3,4 +3,5 @@
 cd "$(dirname "$0")/.."
 set -x
 cp "$(readlink -f holodule.html)" /var/www/html/index.html
+sudo cp -r "$(readlink -f static)" /var/www/html/
 
