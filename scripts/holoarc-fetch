@@ -1,0 +1,13 @@
+#!/bin/bash
+
+URL=https://schedule.hololive.tv/
+
+if [[ -n "$HOLODULE_DIR" ]]; then
+    ODIR="$HOLODULE_DIR"
+else
+    ODIR="$(dirname "$0")/../holodule"
+fi
+
+OFILE="$(date +"%Y%m%d-%H%M%S").html"
+
+wget -q "${URL}" -O "${ODIR}/${OFILE}"
