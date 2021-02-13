@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+./fetch || exit 1
+./parse || exit 1
+./generate_html || exit 1
+
