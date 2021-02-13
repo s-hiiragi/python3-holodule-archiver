@@ -25,15 +25,20 @@ See setting.py
 
 Windows
 
-```py
+```console
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Linux
+Ubuntu 20.04
 
-T.B.D.
+```console
+sudo apt install python3-venv
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
 
 ## How to edit crontab settings
