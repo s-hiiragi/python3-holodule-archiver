@@ -8,16 +8,7 @@ I want to see the past schedule sometimes so I save the webpage into a database 
 For the present you can create a html that contains all the past schedule by using generate_html.py.
 
 
-## How to create a develop/runtime environment
-
-```py
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-
-## Scripts
+## Python Scripts
 
 | Name          | Description                                     | Command                     |
 | ------------- | ----------------------------------------------- | --------------------------- |
@@ -28,6 +19,36 @@ pip install -r requirements.txt
 
 Default locations of html files and a database:
 See setting.py
+
+
+## How to create a develop/runtime environment
+
+Windows
+
+```py
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Linux
+
+T.B.D.
+
+
+## How to edit crontab settings
+
+Command
+
+```console
+crontab -u USER -e
+```
+
+Crontab settings
+
+```txt
+5 0 * * * /home/USER/python3-holodule-archiver/scripts/holoarc-fetch
+```
 
 
 ## License
