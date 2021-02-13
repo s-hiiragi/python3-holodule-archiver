@@ -1,3 +1,5 @@
+import os
+import sys
 import sqlite3
 import datetime
 from jinja2 import Template
@@ -42,8 +44,13 @@ def generate_html():
     template = Template(template_html)
     html = template.render(render_data)
 
-    with open('holodule.html', 'w', encoding='UTF-8') as f:
+    savename = 'holodule.html'
+    savename = os.path.abspath(savename)
+
+    with open(savename, 'w', encoding='UTF-8') as f:
         f.write(html)
+
+    print(f'write {savename}', file=sys.stderr)
 
 
 def main():

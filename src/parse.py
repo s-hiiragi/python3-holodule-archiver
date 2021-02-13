@@ -131,7 +131,8 @@ def parse(fresh=False):
     htmlfiles = sorted(glob.glob(os.path.join(holodule_dir, '*.html')))
     print('file count:', len(htmlfiles))
 
-    conn = sqlite3.connect(dbname)
+    dbpath = os.path.abspath(dbname)
+    conn = sqlite3.connect(dbpath)
     cur = conn.cursor()
 
     cur.execute('''CREATE TABLE IF NOT EXISTS htmlfiles(
@@ -209,6 +210,8 @@ def parse(fresh=False):
 
     conn.commit()
     conn.close()
+
+    print(f'write {dbpath}', file=sys.stderr)
 
 
 def main():

@@ -1,5 +1,6 @@
 #!/bin/bash
 
 cd "$(dirname "$0")/.."
-cp holodule.html /var/www/html/index.html
+set -x
+cp "$(readlink -f holodule.html)" /var/www/html/index.html
 
