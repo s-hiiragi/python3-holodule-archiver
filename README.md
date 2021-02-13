@@ -43,16 +43,24 @@ pip install -r requirements.txt
 
 ## How to edit crontab settings
 
-Command
+crontab settings (1/2)
 
 ```console
-crontab -u USER -e
+crontab -e
 ```
 
-Crontab settings
-
 ```txt
-5 0 * * * /home/USER/python3-holodule-archiver/scripts/holoarc-fetch
+5 0,12 * * * /home/USER/python3-holodule-archiver/scripts/fetch-parse-generate
+```
+
+crontab settings (2/2)
+
+```
+sudo crontab -e
+```
+
+```
+7 0,12 * * * /home/hii/repo/python3-holodule-archiver/scripts/deploy
 ```
 
 
