@@ -23,7 +23,7 @@ See setting.py
 
 ## How to create a develop/runtime environment
 
-Windows
+Windows 10
 
 ```console
 python -m venv .venv
