@@ -55,11 +55,11 @@ crontab -e
 
 crontab settings (2/2)
 
-```
+```console
 sudo crontab -e
 ```
 
-```
+```console
 7 0,12 * * * /home/hii/repo/python3-holodule-archiver/scripts/deploy
 ```
 
