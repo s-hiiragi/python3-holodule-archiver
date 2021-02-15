@@ -2,10 +2,11 @@ import os
 import sys
 import datetime
 import requests
+import argparse
 from .setting import holodule_dir
 
 
-def fetch():
+def fetch(outdir):
     # htmlを取得
 
     holodule_url = 'https://schedule.hololive.tv/'
@@ -13,11 +14,11 @@ def fetch():
     print(f'fetching {holodule_url} ...', file=sys.stderr)
     res = requests.get(holodule_url)
 
-    if not os.path.exists(holodule_dir):
-        os.mkdir(holodule_dir)
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
 
     now = datetime.datetime.now()
-    savename = os.path.join(holodule_dir, '{}.html'.format(now.strftime('%Y%m%d-%H%M%S')))
+    savename = os.path.join(outdir, '{}.html'.format(now.strftime('%Y%m%d-%H%M%S')))
     savename = os.path.abspath(savename)
 
     with open(savename, 'w', encoding=res.encoding) as f:
@@ -27,7 +28,13 @@ def fetch():
 
 
 def main():
-    fetch()
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('-O', '--outdir')
+    args = argparser.parse_args()
+
+    outdir = args.outdir or holodule_dir
+
+    fetch(outdir)
 
 
 if __name__ == '__main__':
