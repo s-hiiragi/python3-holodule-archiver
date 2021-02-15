@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ ${EUID:-${UID}} != 0 ]]; then
+  echo 'ERROR: root privilege is required' 1>&2
+  exit 1
+fi
+
 cd "$(dirname "$0")/.."
 set -x
 cp "$(readlink -f holodule.html)" /var/www/html/index.html
