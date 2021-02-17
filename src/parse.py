@@ -60,7 +60,16 @@ class Stream:
 
 def parse_holodule(text, year):
     """
-    ホロジュールには年情報が含まれていないため、メタ情報として渡す必要がある。
+    Parameters
+    ----------
+    text: str
+        ホロジュールのHTMLソースコード
+    year: int
+        ホロジュールには年情報が含まれていないため、メタ情報として渡す必要がある。
+
+    Returns
+    -------
+    streams: list[Stream]
     """
     streams = []
 
@@ -138,6 +147,7 @@ def parse(indir, dbname, fresh=False, verbose=False):
     conn = sqlite3.connect(dbpath)
     cur = conn.cursor()
 
+    # 未登録のファイルのパース済みフラグをクリアする
     cur.execute('''CREATE TABLE IF NOT EXISTS htmlfiles(
                     filename   TEXT PRIMARY KEY,
                     is_parsed  INTEGER NOT NULL
@@ -153,6 +163,7 @@ def parse(indir, dbname, fresh=False, verbose=False):
 
     for file_ in htmlfiles:
 
+        # パース済みのファイルをスキップする
         cur.execute('''SELECT is_parsed FROM htmlfiles WHERE filename = {}
                 ;'''.format(escape_as_sqlite_str(os.path.basename(file_))))
 
@@ -163,6 +174,7 @@ def parse(indir, dbname, fresh=False, verbose=False):
                 print('{}: skipped'.format(file_))
             continue
 
+        # ファイルをパースする
         print('{}: parsing...'.format(file_))
 
         year = int(os.path.basename(file_)[:4])
@@ -173,6 +185,7 @@ def parse(indir, dbname, fresh=False, verbose=False):
         for stream in streams:
             streamers.append(stream.streamer)
 
+        # パース済みフラグをセットする
         cur.execute('''UPDATE htmlfiles
                 SET is_parsed = 1
                 WHERE filename = {}
