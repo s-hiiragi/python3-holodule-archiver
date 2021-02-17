@@ -5,6 +5,10 @@ import glob
 import sqlite3
 import datetime
 import argparse
+import pathlib
+import hashlib
+import requests
+from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 from . import setting
 
@@ -136,14 +140,14 @@ def escape_as_sqlite_str(s):
     return "'{}'".format(s.replace("'", "''"))
 
 
-def parse(indir, dbname, fresh=False, verbose=False):
+def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
     # htmlを解析
+    print('parsing htmls ...', file=sys.stderr)
     start = datetime.datetime.now()
 
-    htmlfiles = sorted(glob.glob(os.path.join(indir, '*.html')))
-    print('file count:', len(htmlfiles))
+    htmlpaths = sorted(glob.glob(os.path.join(indir, '*.html')))
+    print('number of htmls: ', len(htmlpaths), file=sys.stderr)
 
-    dbpath = os.path.abspath(dbname)
     conn = sqlite3.connect(dbpath)
     cur = conn.cursor()
 
@@ -153,33 +157,32 @@ def parse(indir, dbname, fresh=False, verbose=False):
                     is_parsed  INTEGER NOT NULL
             );''')
 
-    for file_ in htmlfiles:
+    for htmlpath in htmlpaths:
         cur.execute('''INSERT OR IGNORE INTO htmlfiles VALUES(
                 {}, {}
-                );'''.format(escape_as_sqlite_str(os.path.basename(file_)), 0))
+                );'''.format(escape_as_sqlite_str(os.path.basename(htmlpath)), 0))
 
     streams = []
     streamers = []
 
-    for file_ in htmlfiles:
+    for htmlpath in htmlpaths:
 
         # パース済みのファイルをスキップする
         cur.execute('''SELECT is_parsed FROM htmlfiles WHERE filename = {}
-                ;'''.format(escape_as_sqlite_str(os.path.basename(file_))))
+                ;'''.format(escape_as_sqlite_str(os.path.basename(htmlpath))))
 
         is_parsed = cur.fetchone()[0]
-
-        if not fresh and is_parsed:
+        if is_parsed and not fresh:
             if verbose:
-                print('{}: skipped'.format(file_))
+                print(f'skip {htmlpath}', file=sys.stderr)
             continue
 
         # ファイルをパースする
-        print('{}: parsing...'.format(file_))
+        print(f'parsing {htmlpath} ...', file=sys.stderr)
 
-        year = int(os.path.basename(file_)[:4])
+        year = int(os.path.basename(htmlpath)[:4])
 
-        with open(file_, encoding='UTF-8') as f:
+        with open(htmlpath, encoding='UTF-8') as f:
             streams.extend(parse_holodule(f.read(), year))
 
         for stream in streams:
@@ -189,12 +192,12 @@ def parse(indir, dbname, fresh=False, verbose=False):
         cur.execute('''UPDATE htmlfiles
                 SET is_parsed = 1
                 WHERE filename = {}
-                ;'''.format(escape_as_sqlite_str(os.path.basename(file_))))
+                ;'''.format(escape_as_sqlite_str(os.path.basename(htmlpath))))
 
     streamers = sorted(set(streamers))
 
     elapsed_time = datetime.datetime.now() - start
-    print('parse: {} [sec]'.format(elapsed_time))
+    print(f'parse time: {elapsed_time} [sec]', file=sys.stderr)
 
     # 永続化
 
@@ -211,6 +214,13 @@ def parse(indir, dbname, fresh=False, verbose=False):
                     icon_path  TEXT
             );''')
 
+    cur.execute('''CREATE TABLE IF NOT EXISTS thumbnails(
+                    url           TEXT NOT NULL,
+                    hash          TEXT NOT NULL,
+                    filename      TEXT NOT NULL,
+                    PRIMARY KEY(url, hash)
+            );''')
+
     for stream in streams:
         cur.execute('''INSERT OR REPLACE INTO streams VALUES(
                 {}, {}, {}, {}, {}
@@ -225,6 +235,52 @@ def parse(indir, dbname, fresh=False, verbose=False):
                 {}, {}
                 );'''.format(escape_as_sqlite_str(streamer.name), escape_as_sqlite_str(streamer.icon_path)))
 
+    print('downloading thumbnails ...', file=sys.stderr)
+    start = datetime.datetime.now()
+
+    if not os.path.exists(thumb_dir):
+        print(f'create directory {thumb_dir}', file=sys.stderr)
+        os.mkdir(thumb_dir)
+
+    # not_found_image_sha256 = '20e9aab22032d85684d7d916a1013f7c577a132a5b10ea3fd3578e8d0b28a711'
+    for stream in streams:
+        # サムネイルをダウンロードする
+        if verbose:
+            print(f'downloading thumbnail {stream.thumb_url} ...', file=sys.stderr)
+        r = requests.get(stream.thumb_url)
+        hash = hashlib.sha256(r.content).hexdigest()
+
+        # サムネイルが登録済みならスキップする
+        #cur.execute('''SELECT COUNT(*) FROM thumbnails WHERE url = {} AND hash = {}
+        #        ;'''.format(escape_as_sqlite_str(stream.thumb_url),
+        #                    escape_as_sqlite_str(hash)))
+        #
+        #count = cur.fetchone()[0]
+        #if count >= 1:
+        #    continue
+
+        # サムネイルをファイルに保存する
+        stream_id = parse_qs(urlparse(stream.url).query)['v'][0]
+        short_hash = hash[:7]
+        ext = pathlib.Path(stream.thumb_url).suffix
+        savename = f'{stream_id}_{short_hash}{ext}'
+        savepath = pathlib.Path(thumb_dir) / savename
+
+        if not savepath.exists():
+            with open(str(savepath), 'wb') as f:
+                f.write(r.content)
+            print(f'write {savepath}', file=sys.stderr)
+
+        # サムネイルを登録する
+        cur.execute('''INSERT OR REPLACE INTO thumbnails VALUES(
+                {}, {}, {}
+                );'''.format(escape_as_sqlite_str(stream.thumb_url),
+                             escape_as_sqlite_str(hash),
+                             escape_as_sqlite_str(savename)))
+
+    elapsed_time = datetime.datetime.now() - start
+    print(f'download time: {elapsed_time} [sec]', file=sys.stderr)
+
     conn.commit()
     conn.close()
 
@@ -234,15 +290,17 @@ def parse(indir, dbname, fresh=False, verbose=False):
 def main():
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-I', '--indir', help='The directory that contains html files')
-    argparser.add_argument('-d', '--dbname')
+    argparser.add_argument('-d', '--dbpath')
+    argparser.add_argument('-t', '--thumbdir', help='The directory that contains thumbnails of streams')
     argparser.add_argument('-f', '--fresh', action='store_true')
-    argparser.add_argument('-v', '--verbose')
+    argparser.add_argument('-v', '--verbose', action='store_true')
     args = argparser.parse_args()
 
-    indir = args.indir or setting.holodule_dir
-    dbname = args.dbname or setting.dbname
+    indir = os.path.abspath(str(args.indir or setting.holodule_dir))
+    dbpath = os.path.abspath(str(args.dbpath or setting.dbname))
+    thumb_dir = os.path.abspath(str(args.thumbdir or setting.thumb_dir))
 
-    parse(indir, dbname, fresh=args.fresh, verbose=args.verbose)
+    parse(indir, dbpath, thumb_dir, fresh=args.fresh, verbose=args.verbose)
     return 0
 
 
