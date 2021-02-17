@@ -69,22 +69,27 @@ def parse_holodule(text, year):
     updated_at = datetime.datetime.now()
 
     month = None
-    day_of_month = None
+    day = None
     for container in soup.select('.tab-pane > .container'):
 
+        # 日付バーから日付を取り出す
         date_headers = container.select('.navbar-text')
         if date_headers:
             date_text = date_headers[0].get_text(strip=True)
 
             m = re.search(r'^(\d+)/(\d+)\s*\((.+)\)$', date_text)
             month = int(m.group(1))
-            day_of_month = int(m.group(2))
-            #day_of_week_ja = m.group(3)
+            day = int(m.group(2))
+            # day_of_week_ja = m.group(3)
 
-            #print('-- {}/{}({}) --'.format(month, day_of_month, day_of_week_ja))
-
+        # 配信情報からURL等を取り出す
         thumbnails = container.select('a.thumbnail')
         if thumbnails:
+            # 配信情報よりも前に日付バーがあることを期待する
+            # (そうでないと配信日が判らない)
+            assert month is not None
+            assert day is not None
+
             for thumb in thumbnails:
                 stream_url = thumb['href']
 
@@ -99,7 +104,7 @@ def parse_holodule(text, year):
                 hours = int(m.group(1))
                 minutes = int(m.group(2))
 
-                starts_at = datetime.datetime(year, month, day_of_month, hours, minutes)
+                starts_at = datetime.datetime(year, month, day, hours, minutes)
 
                 streamer_name = rows[0].div.find_all('div', recursive=False)[1].get_text(strip=True)
 
@@ -110,8 +115,6 @@ def parse_holodule(text, year):
                     icon_urls.append(icon.img['src'])
 
                 streamer_icon_url = icon_urls[0] if icon_urls else None
-
-                #print('{} {} {}'.format(starts_at.strftime('%Y/%m/%d %H:%M:%S'), streamer_name, stream_url))
 
                 streamer = Streamer(streamer_name, streamer_icon_url)
                 stream = Stream(stream_url, streamer, thumb_url, starts_at, updated_at)
@@ -198,10 +201,10 @@ def parse(fresh=False):
         cur.execute('''INSERT OR REPLACE INTO streams VALUES(
                 {}, {}, {}, {}, {}
                 );'''.format(escape_as_sqlite_str(stream.url),
-                escape_as_sqlite_str(stream.thumb_url),
-                escape_as_sqlite_str(stream.streamer.name),
-                escape_as_sqlite_str(stream.starts_at.isoformat()),
-                escape_as_sqlite_str(stream.updated_at.isoformat())))
+                             escape_as_sqlite_str(stream.thumb_url),
+                             escape_as_sqlite_str(stream.streamer.name),
+                             escape_as_sqlite_str(stream.starts_at.isoformat()),
+                             escape_as_sqlite_str(stream.updated_at.isoformat())))
 
     for streamer in streamers:
         cur.execute('''INSERT OR REPLACE INTO streamers VALUES(
