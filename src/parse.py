@@ -6,7 +6,7 @@ import sqlite3
 import datetime
 import argparse
 from bs4 import BeautifulSoup
-from .setting import holodule_dir, dbname
+from . import setting
 
 
 class Streamer():
@@ -127,11 +127,11 @@ def escape_as_sqlite_str(s):
     return "'{}'".format(s.replace("'", "''"))
 
 
-def parse(fresh=False):
+def parse(indir, dbname, fresh=False, verbose=False):
     # htmlを解析
     start = datetime.datetime.now()
 
-    htmlfiles = sorted(glob.glob(os.path.join(holodule_dir, '*.html')))
+    htmlfiles = sorted(glob.glob(os.path.join(indir, '*.html')))
     print('file count:', len(htmlfiles))
 
     dbpath = os.path.abspath(dbname)
@@ -159,7 +159,8 @@ def parse(fresh=False):
         is_parsed = cur.fetchone()[0]
 
         if not fresh and is_parsed:
-            print('{}: skipped'.format(file_))
+            if verbose:
+                print('{}: skipped'.format(file_))
             continue
 
         print('{}: parsing...'.format(file_))
@@ -219,10 +220,16 @@ def parse(fresh=False):
 
 def main():
     argparser = argparse.ArgumentParser()
+    argparser.add_argument('-I', '--indir', help='The directory that contains html files')
+    argparser.add_argument('-d', '--dbname')
     argparser.add_argument('-f', '--fresh', action='store_true')
+    argparser.add_argument('-v', '--verbose')
     args = argparser.parse_args()
 
-    parse(args.fresh)
+    indir = args.indir or setting.holodule_dir
+    dbname = args.dbname or setting.dbname
+
+    parse(indir, dbname, fresh=args.fresh, verbose=args.verbose)
     return 0
 
 
