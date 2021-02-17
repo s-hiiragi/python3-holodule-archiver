@@ -60,7 +60,7 @@ sudo crontab -e
 ```
 
 ```console
-7 0,12 * * * /home/hii/repo/python3-holodule-archiver/scripts/deploy
+10 0,12 * * * /home/hii/repo/python3-holodule-archiver/scripts/deploy
 ```
 
 
