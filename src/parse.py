@@ -243,10 +243,9 @@ def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
         os.mkdir(thumb_dir)
 
     # not_found_image_sha256 = '20e9aab22032d85684d7d916a1013f7c577a132a5b10ea3fd3578e8d0b28a711'
-    for stream in streams:
+    for i, stream in enumerate(streams):
         # サムネイルをダウンロードする
-        if verbose:
-            print(f'downloading thumbnail {stream.thumb_url} ...', file=sys.stderr)
+        print(f'downloading {stream.thumb_url} ... ({i+1}/{len(streams)})', file=sys.stderr)
         r = requests.get(stream.thumb_url)
         hash = hashlib.sha256(r.content).hexdigest()
 
@@ -266,7 +265,10 @@ def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
         savename = f'{stream_id}_{short_hash}{ext}'
         savepath = pathlib.Path(thumb_dir) / savename
 
-        if not savepath.exists():
+        if savepath.exists():
+            if verbose:
+                print(f'skip {savepath}', file=sys.stderr)
+        else:
             with open(str(savepath), 'wb') as f:
                 f.write(r.content)
             print(f'write {savepath}', file=sys.stderr)
