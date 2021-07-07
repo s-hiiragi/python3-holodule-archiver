@@ -106,6 +106,12 @@ def parse_holodule(text, year):
             for thumb in thumbnails:
                 stream_url = thumb['href']
 
+                # YouTubeのリンクでない場合はスキップする
+                # (例) 2021/07/07 Vのすこんなオタ活なんだワ！（ラジオ）のリンク
+                if not stream_url.startswith('https://www.youtube.com/'):
+                    print('[DEBUG] it is not a youtube link')
+                    continue
+
                 # a.thumbnailの下にdivが無い場合は広告バナー（カルーセル）と判定する
                 # (例) 2021/06/16 Beyond the Stageの広告バナー
                 if thumb.div is None:
