@@ -106,6 +106,11 @@ def parse_holodule(text, year):
             for thumb in thumbnails:
                 stream_url = thumb['href']
 
+                # a.thumbnailの下にdivが無い場合はカルーセルと判定する
+                if thumb.div is None:
+                    print('[DEBUG] it is a carousel')
+                    continue
+
                 rows = thumb.div.div.find_all('div', recursive=False)
 
                 time_text = rows[0].div.find_all('div', recursive=False)[0].get_text(strip=True)
