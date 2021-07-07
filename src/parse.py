@@ -106,7 +106,8 @@ def parse_holodule(text, year):
             for thumb in thumbnails:
                 stream_url = thumb['href']
 
-                # a.thumbnailの下にdivが無い場合はカルーセルと判定する
+                # a.thumbnailの下にdivが無い場合は広告バナー（カルーセル）と判定する
+                # (例) 2021/06/16 Beyond the Stageの広告バナー
                 if thumb.div is None:
                     print('[DEBUG] it is a carousel')
                     continue
@@ -116,6 +117,8 @@ def parse_holodule(text, year):
                 time_text = rows[0].div.find_all('div', recursive=False)[0].get_text(strip=True)
                 if not time_text:
                     # 時刻無しは広告と判定する
+                    # (例) 2020/12/01 AZKi 6thライブ＆CDの宣伝
+                    print('[DEBUG] it is an advertisement')
                     continue
 
                 m = re.search(r'^(\d+):(\d+)$', time_text)
