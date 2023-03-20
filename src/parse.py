@@ -94,6 +94,7 @@ def parse_holodule(text, year):
             month = int(m.group(1))
             day = int(m.group(2))
             # day_of_week_ja = m.group(3)
+            #print(f'[DEBUG] == {month}/{day}')
 
         # 配信情報からURL等を取り出す
         thumbnails = container.select('a.thumbnail')
@@ -105,6 +106,7 @@ def parse_holodule(text, year):
 
             for thumb in thumbnails:
                 stream_url = thumb['href']
+                #print(f'[DEBUG] {stream_url=}')
 
                 # YouTubeのリンクでない場合はスキップする
                 # (例) 2021/07/07 Vのすこんなオタ活なんだワ！（ラジオ）のリンク
@@ -197,6 +199,7 @@ def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
         year = int(os.path.basename(htmlpath)[:4])
 
         with open(htmlpath, encoding='UTF-8') as f:
+            #print(f'{htmlpath=}')
             streams.extend(parse_holodule(f.read(), year))
 
         for stream in streams:
@@ -215,12 +218,14 @@ def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
 
     # 永続化
 
+    # 次のカラムは別途取得する: title
     cur.execute('''CREATE TABLE IF NOT EXISTS streams(
                     url           TEXT PRIMARY KEY,
                     thumb_url     TEXT NOT NULL,
                     streamer_name TEXT NOT NULL,
                     starts_at     TEXT,
-                    updated_at    TEXT
+                    updated_at    TEXT,
+                    title         TEXT
             );''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS streamers(
