@@ -111,13 +111,13 @@ def parse_holodule(text, year):
                 # YouTubeのリンクでない場合はスキップする
                 # (例) 2021/07/07 Vのすこんなオタ活なんだワ！（ラジオ）のリンク
                 if not stream_url.startswith('https://www.youtube.com/'):
-                    print('[DEBUG] it is not a youtube link')
+                    print(f'[DEBUG] it is not a youtube link ({stream_url})')
                     continue
 
                 # a.thumbnailの下にdivが無い場合は広告バナー（カルーセル）と判定する
                 # (例) 2021/06/16 Beyond the Stageの広告バナー
                 if thumb.div is None:
-                    print('[DEBUG] it is a carousel')
+                    #print('[DEBUG] it is a carousel')
                     continue
 
                 rows = thumb.div.div.find_all('div', recursive=False)
@@ -126,7 +126,7 @@ def parse_holodule(text, year):
                 if not time_text:
                     # 時刻無しは広告と判定する
                     # (例) 2020/12/01 AZKi 6thライブ＆CDの宣伝
-                    print('[DEBUG] it is an advertisement')
+                    #print('[DEBUG] it is an advertisement')
                     continue
 
                 m = re.search(r'^(\d+):(\d+)$', time_text)
@@ -278,10 +278,20 @@ def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
         #    continue
 
         # サムネイルをファイルに保存する
-        stream_id = parse_qs(urlparse(stream.url).query)['v'][0]
         short_hash = hash[:7]
         ext = pathlib.Path(stream.thumb_url).suffix
-        savename = f'{stream_id}_{short_hash}{ext}'
+        query_values = parse_qs(urlparse(stream.url).query)
+
+        if 'v' in query_values:
+            stream_id = query_values['v'][0]
+            savename = f'{stream_id}_{short_hash}{ext}'
+        else:
+            # YouTube以外のサムネイルが表示されることがあるので、
+            # YouTubeのサムネファイルと区別できるように適当な記号を付けておく
+            # (例: 2023/03/21 【Blue Journey】Teaser Movieのサムネイル)
+            fname = pathlib.Path(stream.thumb_url).name
+            savename = f'@{fname}_{short_hash}{ext}'
+
         savepath = pathlib.Path(thumb_dir) / savename
 
         if savepath.exists():
