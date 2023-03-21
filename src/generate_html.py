@@ -2,9 +2,18 @@ import os
 import sys
 import sqlite3
 import datetime
+import logging
 from jinja2 import Template
 from textwrap import dedent
 from .setting import dbname
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stderr)
+handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(module)s: %(message)s'))
+logger.addHandler(handler)
+logging = None  # do not use logging.info
 
 
 def generate_render_data():
@@ -50,7 +59,7 @@ def generate_html():
     with open(savename, 'w', encoding='UTF-8') as f:
         f.write(html)
 
-    print(f'write {savename}', file=sys.stderr)
+    logger.info(f'write {savename}')
 
 
 def main():
