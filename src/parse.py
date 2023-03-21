@@ -100,6 +100,7 @@ def parse_holodule(text, year):
             date_text = date_headers[0].get_text(strip=True)
 
             m = re.search(r'^(\d+)/(\d+)\s*\((.+)\)$', date_text)
+            assert m is not None
             month = int(m.group(1))
             day = int(m.group(2))
             # day_of_week_ja = m.group(3)
@@ -139,6 +140,7 @@ def parse_holodule(text, year):
                     continue
 
                 m = re.search(r'^(\d+):(\d+)$', time_text)
+                assert m is not None
                 hours = int(m.group(1))
                 minutes = int(m.group(2))
 
