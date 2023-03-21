@@ -8,9 +8,18 @@ import argparse
 import pathlib
 import hashlib
 import requests
+import logging
 from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 from . import setting
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stderr)
+handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(module)s: %(message)s'))
+logger.addHandler(handler)
+logging = None  # do not use logging.info
 
 
 class Streamer():
@@ -94,7 +103,7 @@ def parse_holodule(text, year):
             month = int(m.group(1))
             day = int(m.group(2))
             # day_of_week_ja = m.group(3)
-            #print(f'[DEBUG] == {month}/{day}')
+            #logger.debug(f'{month}/{day}')
 
         # 配信情報からURL等を取り出す
         thumbnails = container.select('a.thumbnail')
@@ -106,18 +115,18 @@ def parse_holodule(text, year):
 
             for thumb in thumbnails:
                 stream_url = thumb['href']
-                #print(f'[DEBUG] {stream_url=}')
+                #logger.debug(f'{stream_url=}')
 
                 # YouTubeのリンクでない場合はスキップする
                 # (例) 2021/07/07 Vのすこんなオタ活なんだワ！（ラジオ）のリンク
                 if not stream_url.startswith('https://www.youtube.com/'):
-                    print(f'[DEBUG] it is not a youtube link ({stream_url})')
+                    logger.debug(f'it is not a youtube link ({stream_url})')
                     continue
 
                 # a.thumbnailの下にdivが無い場合は広告バナー（カルーセル）と判定する
                 # (例) 2021/06/16 Beyond the Stageの広告バナー
                 if thumb.div is None:
-                    #print('[DEBUG] it is a carousel')
+                    #logger.debug('it is a carousel')
                     continue
 
                 rows = thumb.div.div.find_all('div', recursive=False)
@@ -126,7 +135,7 @@ def parse_holodule(text, year):
                 if not time_text:
                     # 時刻無しは広告と判定する
                     # (例) 2020/12/01 AZKi 6thライブ＆CDの宣伝
-                    #print('[DEBUG] it is an advertisement')
+                    #logger.debug('it is an advertisement')
                     continue
 
                 m = re.search(r'^(\d+):(\d+)$', time_text)
@@ -158,11 +167,11 @@ def escape_as_sqlite_str(s):
 
 def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
     # htmlを解析
-    print('parsing htmls ...', file=sys.stderr)
+    logger.info('parsing htmls ...')
     start = datetime.datetime.now()
 
     htmlpaths = sorted(glob.glob(os.path.join(indir, '*.html')))
-    print('number of htmls: ', len(htmlpaths), file=sys.stderr)
+    logger.info(f'number of htmls: {len(htmlpaths)}')
 
     conn = sqlite3.connect(dbpath)
     cur = conn.cursor()
@@ -190,16 +199,16 @@ def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
         is_parsed = cur.fetchone()[0]
         if is_parsed and not fresh:
             if verbose:
-                print(f'skip {htmlpath}', file=sys.stderr)
+                logger.info(f'skip {htmlpath}')
             continue
 
         # ファイルをパースする
-        print(f'parsing {htmlpath} ...', file=sys.stderr)
+        logger.info(f'parsing {htmlpath} ...')
 
         year = int(os.path.basename(htmlpath)[:4])
 
         with open(htmlpath, encoding='UTF-8') as f:
-            #print(f'{htmlpath=}')
+            #logger.info(f'{htmlpath=}')
             streams.extend(parse_holodule(f.read(), year))
 
         for stream in streams:
@@ -214,7 +223,7 @@ def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
     streamers = sorted(set(streamers))
 
     elapsed_time = datetime.datetime.now() - start
-    print(f'parse time: {elapsed_time} [sec]', file=sys.stderr)
+    logger.info(f'parse time: {elapsed_time} [sec]')
 
     # 永続化
 
@@ -254,17 +263,17 @@ def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
                 {}, {}
                 );'''.format(escape_as_sqlite_str(streamer.name), escape_as_sqlite_str(streamer.icon_path)))
 
-    print('downloading thumbnails ...', file=sys.stderr)
+    logger.info('downloading thumbnails ...')
     start = datetime.datetime.now()
 
     if not os.path.exists(thumb_dir):
-        print(f'create directory {thumb_dir}', file=sys.stderr)
+        logger.info(f'create directory {thumb_dir}')
         os.mkdir(thumb_dir)
 
     # not_found_image_sha256 = '20e9aab22032d85684d7d916a1013f7c577a132a5b10ea3fd3578e8d0b28a711'
     for i, stream in enumerate(streams):
         # サムネイルをダウンロードする
-        print(f'downloading {stream.thumb_url} ... ({i+1}/{len(streams)})', file=sys.stderr)
+        logger.info(f'downloading {stream.thumb_url} ... ({i+1}/{len(streams)})')
         r = requests.get(stream.thumb_url)
         hash = hashlib.sha256(r.content).hexdigest()
 
@@ -296,11 +305,11 @@ def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
 
         if savepath.exists():
             if verbose:
-                print(f'skip {savepath}', file=sys.stderr)
+                logger.info(f'skip {savepath}')
         else:
             with open(str(savepath), 'wb') as f:
                 f.write(r.content)
-            print(f'write {savepath}', file=sys.stderr)
+            logger.info(f'write {savepath}')
 
         # サムネイルを登録する
         cur.execute('''INSERT OR REPLACE INTO thumbnails VALUES(
@@ -310,12 +319,12 @@ def parse(indir, dbpath, thumb_dir, fresh=False, verbose=False):
                              escape_as_sqlite_str(savename)))
 
     elapsed_time = datetime.datetime.now() - start
-    print(f'download time: {elapsed_time} [sec]', file=sys.stderr)
+    logger.info(f'download time: {elapsed_time} [sec]')
 
     conn.commit()
     conn.close()
 
-    print(f'write {dbpath}', file=sys.stderr)
+    logger.info(f'write {dbpath}')
 
 
 def main():

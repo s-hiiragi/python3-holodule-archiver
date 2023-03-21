@@ -3,7 +3,16 @@ import sys
 import datetime
 import requests
 import argparse
+import logging
 from .setting import holodule_dir
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stderr)
+handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(module)s: %(message)s'))
+logger.addHandler(handler)
+logging = None  # do not use logging.info
 
 
 def fetch(outdir):
@@ -11,7 +20,7 @@ def fetch(outdir):
 
     holodule_url = 'https://schedule.hololive.tv/'
 
-    print(f'fetching {holodule_url} ...', file=sys.stderr)
+    logger.info(f'fetching {holodule_url} ...')
     res = requests.get(holodule_url)
 
     if not os.path.exists(outdir):
@@ -24,7 +33,7 @@ def fetch(outdir):
     with open(savename, 'w', encoding=res.encoding) as f:
         f.write(res.text)
 
-    print(f'write {savename}', file=sys.stderr)
+    logger.info(f'write {savename}')
 
 
 def main():
